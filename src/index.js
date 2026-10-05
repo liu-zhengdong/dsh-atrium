@@ -44,6 +44,21 @@ function dshHome(config) {
   return path.join(os.homedir(), ".dsh");
 }
 
+/**
+ * 宿主自己知道它起的是哪个 profile（dshmarket 的 lib/index.js:45 也是这么拿的）。
+ * `DSH_PROFILE` 只存在于模型 shell 调用的环境里，宿主进程的 env 里没有，所以不能读它。
+ * 登记里带上这个名字，`atrium secretary bridge --dsh <profile>` 才不用你去数进程。
+ */
+function launchedProfileName(ctx) {
+  try {
+    const context = ctx.get?.("profileContext");
+    const name = typeof context?.name === "string" ? context.name.trim() : "";
+    return name;
+  } catch {
+    return "";
+  }
+}
+
 function uid() {
   return typeof process.getuid === "function" ? process.getuid() : 0;
 }
@@ -89,6 +104,10 @@ export function apply(ctx, config) {
 
   const agents = () => ctx.agents.roots?.() ?? ctx.agents.list?.() ?? [];
 
+  // 配置里写了就用配置的；没写就问宿主自己要 profile 名（写进登记，供 bridge --dsh <profile> 用）。
+  const configuredProfile = typeof config?.profile === "string" ? config.profile.trim() : "";
+  const profileName = configuredProfile || launchedProfileName(ctx);
+
   const describe = (agent) => {
     let cwd = "";
     try {
@@ -105,7 +124,7 @@ export function apply(ctx, config) {
       JSON.stringify({
         protocol: PROTOCOL,
         pid,
-        profile: typeof config?.profile === "string" ? config.profile : "",
+        profile: profileName,
         socketPath,
         keyFile: keyPath,
         startedAt: Date.now(),

@@ -15,7 +15,7 @@ import { apply } from "../src/index.js";
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
 /** 起一个插件实例：假 ctx 里放几个活会话，返回它们的投递记录与清理函数。 */
-async function startPlugin({ sessions, config = {} }) {
+async function startPlugin({ sessions, config = {}, profileContext }) {
   const home = await fsp.mkdtemp(path.join(os.tmpdir(), "dsh-atrium-test-"));
   const delivered = [];
   const agents = sessions.map((id) => ({
@@ -28,6 +28,7 @@ async function startPlugin({ sessions, config = {} }) {
   const ctx = {
     agents: { roots: () => agents, list: () => agents },
     on: () => () => {},
+    get: (name) => (name === "profileContext" ? profileContext : undefined),
     effect: (fn) => {
       cleanup = fn() ?? (() => {});
     },
@@ -175,6 +176,34 @@ test("不是 JSON 也不算数：拒收并说明", async () => {
     assert.match(replies[1].error, /不是合法 JSON/);
   } finally {
     p.stop();
+  }
+});
+
+test("登记里的 profile 名：配置优先，没配就问宿主自己要", async () => {
+  const byHost = await startPlugin({
+    sessions: ["session-aaaa1111"],
+    profileContext: { name: "desktop", dir: "/Users/x/.dsh/profiles/desktop" },
+  });
+  try {
+    assert.equal(byHost.info.profile, "desktop");
+  } finally {
+    byHost.stop();
+  }
+  const byConfig = await startPlugin({
+    sessions: ["session-aaaa1111"],
+    profileContext: { name: "desktop", dir: "/Users/x/.dsh/profiles/desktop" },
+    config: { profile: " my-profile " },
+  });
+  try {
+    assert.equal(byConfig.info.profile, "my-profile");
+  } finally {
+    byConfig.stop();
+  }
+  const neither = await startPlugin({ sessions: ["session-aaaa1111"] });
+  try {
+    assert.equal(neither.info.profile, "");
+  } finally {
+    neither.stop();
   }
 });
 
