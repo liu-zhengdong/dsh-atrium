@@ -1,0 +1,11 @@
+{
+  "name": "@liuser/dsh-atrium",
+  "version": "0.0.1",
+  "description": "Atrium × DSH：秘书会话收件插件与 DSH 侧准备",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": { ".": "./src/index.js", "./spike": "./src/spike.js" },
+  "files": ["src"],
+  "license": "MIT",
+  "private": true
+}
