@@ -5,7 +5,12 @@
   "type": "module",
   "main": "src/index.js",
   "exports": { ".": "./src/index.js", "./spike": "./src/spike.js" },
-  "files": ["src"],
+  "files": ["src", "cordis.patch.yml", "README.md"],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
   "license": "MIT",
   "private": true,
   "scripts": { "test": "node --test" }

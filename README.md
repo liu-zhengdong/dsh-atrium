@@ -6,21 +6,27 @@ DSH（DeepSeek Harness）侧的 Atrium 合集：**秘书收件插件**——让 
 
 ## 装
 
+本包是一个**组合包**：`package.json` 里的 `dsh.bundle.patch` 指向随包的 `cordis.patch.yml`，补丁层自己 insert 一条 `dsh-atrium` 条目。安装方只要把包装进 profile、把包名写进 `dsh.profile.bundles`，条目就跟着补丁层挂上，不需要手改 profile 文件。
+
+**桌面客户端**（profile 由应用独占管理，命令行改不了）：
+
+1. 设置 → 插件 → **添加插件**；
+2. 在「包名或自定义安装源」里填**本地绝对路径**——例如 `/Users/liuzhengdong/MyCodeBase/repo/dsh-atrium`——回车；
+3. 装完点**立即启用**。
+
+装之前先把同名的旧条目卸载掉：列表里已有的名字会让安装被判成「已经装过」，直接被挡回来。（历史包袱：早期装的是 `file:/tmp/dsh-atrium`，仓库后来挪到了 `~/MyCodeBase/repo/dsh-atrium`，那条依赖就失效了，应用会把它显示成无效。）
+
+**命令行 profile**（`web`、`headless` 等非桌面 profile）：
+
 ```sh
-dsh plugin --profile <profile> add file:/path/to/dsh-atrium
+dsh plugin --profile <profile> add /abs/path/to/dsh-atrium
 ```
 
-再在这个 profile 的 `~/.dsh/profiles/<profile>/cordis.patch.yml` 里加一条（默认模板里是空数组 `[]`，替换即可）：
+再把包名放进该 profile 的 `dsh.profile.bundles`。补丁层里的配置项（`profile`、`session`）也可以在这一层覆盖。
 
-```yaml
-- insert:
-    - id: dsh-atrium
-      name: '@liuser/dsh-atrium'
-```
+没有组合包时（本包 0.0.0 之前）只能手工在 profile 的 `cordis.patch.yml` 里写 `- insert: [{id: dsh-atrium, name: '@liuser/dsh-atrium'}]`，并会看到 `declares no dsh.bundle` 的警告；现在不必了。
 
-装完 `dsh: warning: @liuser/dsh-atrium declares no dsh.bundle — installed as a plain dependency, not a profile layer` 是正常的：cordis 插件不是组合包，所以不会作为 profile 层被选中，要的就是上面那条 insert。
-
-**改代码后要重装或覆盖**：pnpm 对 `file:` 依赖是硬链接/复制进 profile 的 `node_modules`，源文件改完不重装，profile 里还是旧内容（踩过一次：改出语法错、修好、profile 里仍是坏的那份，报 `atrium-spike (@liuser/dsh-atrium): failed to import`）。
+**改代码后要重装或覆盖**：pnpm 对本地路径依赖是硬链接/复制进 profile 的 `node_modules`，源文件改完不重装，profile 里还是旧内容（踩过一次：改出语法错、修好、profile 里仍是坏的那份，报 `atrium-spike (@liuser/dsh-atrium): failed to import`）。桌面 profile 上就是在插件页卸掉再装一次。
 
 ## 收件地址
 
@@ -81,6 +87,7 @@ sock.on("data", (c) => process.stdout.write(c));
 
 ## 还没做
 
-- Atrium 侧：`internal/platform/dshinbox.go` 与 `atrium secretary bridge --dsh`（Atrium 仓库 issue #872）。
 - 桌面 profile 里的验证：插件装进 `desktop` profile 后，能不能看到并注入你正在看的那个会话（同一个 API，宿主换成 Electron 持有的进程）。
 - 秘书身份署名（现在投进去的消息只带 `from`）。
+
+Atrium 侧那一半（`internal/platform/dshinbox.go`、`atrium secretary bridge --dsh`、把会话指名随消息带给插件）已经合入：Atrium 的 #872 / PR #875、#876 / PR #877。

@@ -1,0 +1,12 @@
+# 组合包补丁层：profile 的 dsh.profile.bundles 里列出本包时应用。
+# 桌面客户端只认得「组合包」：package.json 里有 dsh.bundle.patch 指向本文件，
+# 应用把它装进 profile、写进 dsh.profile.bundles，再按这里的条目挂上插件。
+- insert:
+    - id: dsh-atrium
+      name: "@liuser/dsh-atrium"
+      config:
+        # 收件地址登记里写的 profile 名，只作标识用；留空则由宿主自己带。
+        profile: ""
+        # 消息没带 sessionId 时投给哪个会话（id 或前缀）。留空表示必须由
+        # 投递方指名——多个会话同时开着时，不指名就拒收。
+        session: ""
