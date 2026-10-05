@@ -114,13 +114,10 @@ export function apply(ctx, config) {
     );
   };
 
-  // 挑会话：消息指名就按指名（id 或前缀），否则按配置里的 session，最后才投给全部根会话。
-  const targets = (want) => {
-    const list = agents();
-    const by = want || (typeof config?.session === "string" ? config.session : "");
-    if (by === "") return list;
-    return list.filter((agent) => agent.id === by || agent.id.startsWith(by));
-  };
+  // 挑会话：消息里的 sessionId（id 或前缀）优先，其次插件配置里的 session。
+  // 两边都没写就**不投**：投给全部根会话会把一条事件撒进每个人开着的对话里（默认拒绝比默认广播安全）。
+  const wanted = (want) => want || (typeof config?.session === "string" ? config.session : "");
+  const targets = (by) => agents().filter((agent) => agent.id === by || agent.id.startsWith(by));
 
   const render = (message) => {
     if ((message.as ?? "external") === "user") return message.message;
@@ -134,15 +131,20 @@ export function apply(ctx, config) {
   const deliver = (message) =>
     new Promise((resolve) => {
       setTimeout(() => {
+        const by = wanted(message.sessionId);
+        if (by === "") {
+          resolve({ ok: false, error: "没有指定要投的会话：消息里带 sessionId，或在插件配置里写 session" });
+          return;
+        }
         let list;
         try {
-          list = targets(message.sessionId);
+          list = targets(by);
         } catch (err) {
           resolve({ ok: false, error: String(err?.message ?? err) });
           return;
         }
         if (list.length === 0) {
-          resolve({ ok: false, error: "没有活着的会话" });
+          resolve({ ok: false, error: "没有对上的活会话：" + by });
           return;
         }
         const input = { role: "user", content: [{ type: "text", text: render(message) }], source: { kind: "user" } };

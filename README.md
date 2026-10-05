@@ -35,7 +35,7 @@ dsh plugin --profile <profile> add file:/path/to/dsh-atrium
 - 首行鉴权：裸 token，或 `{"type":"auth","token":"…"}`；回 `{"ok":true,"protocol":1,"pid":…}` 或 `{"ok":false,"error":"unauthorized"}`。
 - 之后一行一条消息：`{"message":"…","as":"user|external","from":"…","deliverAs":"auto|followUp|steer","sessionId":"…"}`；不是 JSON 对象的整行按纯文本处理。`as=external`（缺省）会加一行 `[atrium] 外部消息 · 来自 <from>` 抬头。
 - 每行回一条回执：`{"ok":true,"sessions":[...],"deliverAs":"followUp"}` 或 `{"ok":false,"error":"…"}`。
-- 挑会话：消息里的 `sessionId`（id 或前缀）→ 插件配置里的 `session` → 全部根会话。
+- 挑会话：消息里的 `sessionId`（id 或前缀）优先，其次插件配置里的 `session`；两边都没写**不投**（默认拒绝，免得一条事件撒进每个人开着的对话里）。
 - 投递语义：`deliverAs=followUp`（缺省）排队并唤醒驱动器，起新的一轮；`steer` 插进当前这一步。
 
 一条最小的投递（Node）：
