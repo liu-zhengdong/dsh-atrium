@@ -7,5 +7,6 @@
   "exports": { ".": "./src/index.js", "./spike": "./src/spike.js" },
   "files": ["src"],
   "license": "MIT",
-  "private": true
+  "private": true,
+  "scripts": { "test": "node --test" }
 }
